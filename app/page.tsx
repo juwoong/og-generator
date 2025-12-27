@@ -1,33 +1,19 @@
 'use client';
 
 import { useState, useEffect, useCallback } from 'react';
-import type { OGImageParams, Theme, FontSize } from '@/lib/types';
+import type { OGImageParams } from '@/lib/types';
 import { buildOGUrl } from '@/lib/utils';
-import { THEMES, FONT_SIZES, DEFAULT_THEME, DEFAULT_FONT_SIZE } from '@/lib/constants';
-
-const themeLabels: Record<Theme, string> = {
-  light: '라이트',
-  dark: '다크',
-  gradient: '그라디언트',
-  minimal: '미니멀',
-};
-
-const fontSizeLabels: Record<FontSize, string> = {
-  sm: '작게',
-  md: '보통',
-  lg: '크게',
-  xl: '아주 크게',
-};
 
 export default function Home() {
   const [params, setParams] = useState<OGImageParams>({
     title: '블로그 제목을 입력하세요',
-    theme: DEFAULT_THEME,
-    fontSize: DEFAULT_FONT_SIZE,
-    subtitle: '',
-    author: '',
+    date: '',
+    tags: [],
+    location: '',
+    author: 'Juwoong',
   });
 
+  const [tagsInput, setTagsInput] = useState('');
   const [copied, setCopied] = useState(false);
   const [imageKey, setImageKey] = useState(0);
   const [ogUrl, setOgUrl] = useState('');
@@ -47,13 +33,25 @@ export default function Home() {
     }
   }, [ogUrl]);
 
-  const updateParam = useCallback(<K extends keyof OGImageParams>(
-    key: K,
-    value: OGImageParams[K]
-  ) => {
-    setParams((prev) => ({ ...prev, [key]: value }));
-    setImageKey((k) => k + 1);
-  }, []);
+  const updateParam = useCallback(
+    <K extends keyof OGImageParams>(key: K, value: OGImageParams[K]) => {
+      setParams((prev) => ({ ...prev, [key]: value }));
+      setImageKey((k) => k + 1);
+    },
+    []
+  );
+
+  const handleTagsChange = useCallback(
+    (value: string) => {
+      setTagsInput(value);
+      const tags = value
+        .split(',')
+        .map((t) => t.trim())
+        .filter((t) => t.length > 0);
+      updateParam('tags', tags);
+    },
+    [updateParam]
+  );
 
   return (
     <div className="min-h-screen bg-gray-950 text-white">
@@ -79,7 +77,10 @@ export default function Home() {
               <h2 className="text-lg font-semibold">설정</h2>
 
               <div className="space-y-2">
-                <label htmlFor="title" className="block text-sm font-medium text-gray-300">
+                <label
+                  htmlFor="title"
+                  className="block text-sm font-medium text-gray-300"
+                >
                   제목
                 </label>
                 <textarea
@@ -93,69 +94,71 @@ export default function Home() {
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="subtitle" className="block text-sm font-medium text-gray-300">
-                  부제목 (선택)
+                <label
+                  htmlFor="date"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  날짜
                 </label>
                 <input
-                  id="subtitle"
+                  id="date"
                   type="text"
-                  value={params.subtitle || ''}
-                  onChange={(e) => updateParam('subtitle', e.target.value)}
-                  placeholder="부제목을 입력하세요"
+                  value={params.date || ''}
+                  onChange={(e) => updateParam('date', e.target.value)}
+                  placeholder="2025-01-01"
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
               </div>
 
               <div className="space-y-2">
-                <label htmlFor="author" className="block text-sm font-medium text-gray-300">
-                  작성자 (선택)
+                <label
+                  htmlFor="tags"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  태그 (쉼표로 구분)
+                </label>
+                <input
+                  id="tags"
+                  type="text"
+                  value={tagsInput}
+                  onChange={(e) => handleTagsChange(e.target.value)}
+                  placeholder="React, Next.js, TypeScript"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="location"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  위치
+                </label>
+                <input
+                  id="location"
+                  type="text"
+                  value={params.location || ''}
+                  onChange={(e) => updateParam('location', e.target.value)}
+                  placeholder="Seoul, Korea"
+                  className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
+                />
+              </div>
+
+              <div className="space-y-2">
+                <label
+                  htmlFor="author"
+                  className="block text-sm font-medium text-gray-300"
+                >
+                  작성자
                 </label>
                 <input
                   id="author"
                   type="text"
                   value={params.author || ''}
                   onChange={(e) => updateParam('author', e.target.value)}
-                  placeholder="작성자 이름"
+                  placeholder="Juwoong"
                   className="w-full bg-gray-800 border border-gray-700 rounded-lg px-4 py-3 text-white placeholder-gray-500 focus:outline-none focus:ring-2 focus:ring-blue-500 focus:border-transparent"
                 />
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">테마</label>
-                <div className="grid grid-cols-2 gap-2">
-                  {(Object.keys(THEMES) as Theme[]).map((theme) => (
-                    <button
-                      key={theme}
-                      onClick={() => updateParam('theme', theme)}
-                      className={`px-4 py-3 rounded-lg text-sm font-medium transition-all ${
-                        params.theme === theme
-                          ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                      }`}
-                    >
-                      {themeLabels[theme]}
-                    </button>
-                  ))}
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <label className="block text-sm font-medium text-gray-300">글자 크기</label>
-                <div className="grid grid-cols-4 gap-2">
-                  {(Object.keys(FONT_SIZES) as FontSize[]).map((size) => (
-                    <button
-                      key={size}
-                      onClick={() => updateParam('fontSize', size)}
-                      className={`px-3 py-2 rounded-lg text-sm font-medium transition-all ${
-                        params.fontSize === size
-                          ? 'bg-blue-600 text-white ring-2 ring-blue-400'
-                          : 'bg-gray-800 text-gray-300 hover:bg-gray-700'
-                      }`}
-                    >
-                      {fontSizeLabels[size]}
-                    </button>
-                  ))}
-                </div>
               </div>
             </div>
 
